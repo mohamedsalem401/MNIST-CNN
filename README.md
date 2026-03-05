@@ -22,13 +22,13 @@ pip install -r requirements.txt
 ## Train
 
 ```bash
-python train.py --epochs 8 --batch-size 128 --checkpoint checkpoints/mnist_mlp.pt
+python train.py --epochs 8 --batch-size 128 --num-workers 0 --checkpoint checkpoints/mnist_mlp.pt
 ```
 
 Quick smoke run:
 
 ```bash
-python train.py --epochs 1 --max-train-samples 5000 --max-test-samples 1000
+python train.py --epochs 1 --num-workers 0 --max-train-samples 5000 --max-test-samples 1000
 ```
 
 ## Visualize Forward Pass (Nodes + Lines)
