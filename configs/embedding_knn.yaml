@@ -1,0 +1,17 @@
+method: embedding_knn
+seed: 42
+seeds: [11, 22, 33]
+model:
+  architecture: mlp
+  hidden_sizes: [256, 128]
+optim:
+  epochs: 8
+memory:
+  enabled: false
+  retrieval:
+    k: 8
+    metric: euclidean
+logging:
+  output_root: results
+  experiment_name: baseline_embedding_knn
+  save_checkpoints: false

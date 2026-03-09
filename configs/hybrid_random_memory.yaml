@@ -1,0 +1,20 @@
+method: random_memory
+seed: 42
+seeds: [11, 22, 33]
+model:
+  architecture: mlp
+  hidden_sizes: [256, 128]
+optim:
+  epochs: 8
+memory:
+  enabled: true
+  random_memory_control: true
+  intervention:
+    layer: penultimate
+    mode: gated
+    affected_dims: 64
+    query_mode: full
+logging:
+  output_root: results
+  experiment_name: hybrid_random_memory
+  save_checkpoints: false

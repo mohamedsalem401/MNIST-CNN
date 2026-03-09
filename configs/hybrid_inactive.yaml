@@ -1,0 +1,17 @@
+method: hybrid_inactive
+seed: 42
+seeds: [11, 22, 33]
+model:
+  architecture: mlp
+  hidden_sizes: [256, 128]
+optim:
+  epochs: 8
+memory:
+  enabled: true
+  intervention:
+    training_use: false
+    inference_use: false
+logging:
+  output_root: results
+  experiment_name: hybrid_inactive
+  save_checkpoints: false

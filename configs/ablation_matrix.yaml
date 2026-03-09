@@ -1,0 +1,217 @@
+output_root: results/matrix
+runs:
+  - name: a0_baseline_nn
+    overrides:
+      method: nn
+      memory:
+        enabled: false
+      logging:
+        experiment_name: a0_baseline_nn
+
+  - name: a1_hybrid_penultimate_gated_delta
+    overrides:
+      method: hybrid
+      memory:
+        target:
+          value_type: delta
+          target_construction: grad_delta
+        intervention:
+          layer: penultimate
+          mode: gated
+          query_mode: full
+      logging:
+        experiment_name: a1_hybrid_penultimate_gated_delta
+
+  - name: a2_hybrid_penultimate_overwrite_delta
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          layer: penultimate
+          mode: overwrite
+      logging:
+        experiment_name: a2_hybrid_penultimate_overwrite_delta
+
+  - name: a3_hybrid_penultimate_residual_delta
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          layer: penultimate
+          mode: residual
+      logging:
+        experiment_name: a3_hybrid_penultimate_residual_delta
+
+  - name: a4_hybrid_middle_gated_delta
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          layer: middle
+          mode: gated
+      logging:
+        experiment_name: a4_hybrid_middle_gated_delta
+
+  - name: a5_hybrid_early_gated_delta
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          layer: early
+          mode: gated
+      logging:
+        experiment_name: a5_hybrid_early_gated_delta
+
+  - name: a6_hybrid_penultimate_absolute_target
+    overrides:
+      method: hybrid
+      memory:
+        target:
+          value_type: absolute
+          target_construction: grad_target
+      logging:
+        experiment_name: a6_hybrid_penultimate_absolute_target
+
+  - name: a7_hybrid_query_untouched
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          query_mode: untouched
+      logging:
+        experiment_name: a7_hybrid_query_untouched
+
+  - name: a8_hybrid_query_projection
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          query_mode: projection
+          query_projection_dims: 32
+      logging:
+        experiment_name: a8_hybrid_query_projection
+
+  - name: a9_no_forgetting
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: none
+          memory_size: 0
+      logging:
+        experiment_name: a9_no_forgetting
+
+  - name: a10_fifo_bounded
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: fifo
+          memory_size: 20000
+      logging:
+        experiment_name: a10_fifo_bounded
+
+  - name: a11_reservoir_bounded
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: reservoir
+          memory_size: 20000
+      logging:
+        experiment_name: a11_reservoir_bounded
+
+  - name: a12_usage_eviction
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: usage
+          memory_size: 20000
+      logging:
+        experiment_name: a12_usage_eviction
+
+  - name: a13_helpfulness_eviction
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: helpfulness
+          memory_size: 20000
+      logging:
+        experiment_name: a13_helpfulness_eviction
+
+  - name: a14_helpfulness_age_refresh
+    overrides:
+      method: hybrid
+      memory:
+        forgetting:
+          policy: helpfulness_age
+          memory_size: 20000
+        intervention:
+          refresh:
+            enabled: true
+      logging:
+        experiment_name: a14_helpfulness_age_refresh
+
+  - name: a15_train_only
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          training_use: true
+          inference_use: false
+      logging:
+        experiment_name: a15_train_only
+
+  - name: a16_inference_only
+    overrides:
+      method: hybrid
+      memory:
+        intervention:
+          training_use: false
+          inference_use: true
+      logging:
+        experiment_name: a16_inference_only
+
+  - name: a17_random_memory_control
+    overrides:
+      method: random_memory
+      memory:
+        random_memory_control: true
+      logging:
+        experiment_name: a17_random_memory_control
+
+  - name: a18_hybrid_inactive
+    overrides:
+      method: hybrid_inactive
+      memory:
+        intervention:
+          training_use: false
+          inference_use: false
+      logging:
+        experiment_name: a18_hybrid_inactive
+
+  - name: a19_baseline_nn_large
+    overrides:
+      method: nn_large
+      memory:
+        enabled: false
+      logging:
+        experiment_name: a19_baseline_nn_large
+
+  - name: a20_baseline_nn_extra_layer
+    overrides:
+      method: nn_extra_layer
+      memory:
+        enabled: false
+      logging:
+        experiment_name: a20_baseline_nn_extra_layer
+
+  - name: a21_baseline_embedding_knn
+    overrides:
+      method: embedding_knn
+      memory:
+        enabled: false
+      logging:
+        experiment_name: a21_baseline_embedding_knn
