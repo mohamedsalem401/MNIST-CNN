@@ -1,0 +1,86 @@
+method: hybrid
+seed: 42
+seeds: [11, 22, 33]
+deterministic: false
+data:
+  data_dir: data
+  batch_size: 128
+  eval_batch_size: 256
+  num_workers: 0
+  train_size: 55000
+  val_size: 5000
+  max_train_samples: 0
+  max_val_samples: 0
+  max_test_samples: 0
+model:
+  architecture: mlp
+  hidden_sizes: [256, 128]
+  cnn_channels: [16, 32]
+  latent_dim: 128
+  num_classes: 10
+  dropout: 0.1
+  extra_parametric_layer: false
+optim:
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.00001
+  momentum: 0.9
+  epochs: 8
+  grad_clip_norm: 0.0
+memory:
+  enabled: true
+  insertion_policy: always
+  random_memory_control: false
+  retrieval:
+    k: 8
+    metric: euclidean
+    weighting: inverse_distance
+    temperature: 0.1
+    normalize_keys: true
+    normalize_queries: true
+    normalize_values: false
+    class_conditional: false
+    filter_same_label: false
+  forgetting:
+    policy: helpfulness_age
+    memory_size: 20000
+    ttl_steps: 0
+    helpfulness_age_weight: 0.5
+  target:
+    value_type: delta
+    target_construction: grad_delta
+    gradient_step_size: 0.1
+    centroid_momentum: 0.95
+  intervention:
+    enabled: true
+    layer: penultimate
+    mode: gated
+    affected_dims: 64
+    affected_selection: random
+    query_mode: full
+    query_projection_dims: 64
+    gate_alpha: 0.4
+    gate_schedule: constant
+    warmup_epochs: 1
+    training_use: true
+    inference_use: true
+    populate_during_warmup: true
+    refresh:
+      enabled: true
+      rate: 0.25
+      match_distance_threshold: 0.35
+      ema_key: 0.9
+      ema_value: 0.9
+evaluation:
+  compute_calibration: true
+  ece_bins: 15
+  run_memory_toggle_eval: true
+  confusion_matrix: true
+  per_class_metrics: true
+  max_samples_for_latent_vis: 2000
+logging:
+  output_root: results
+  experiment_name: hybrid_base
+  log_every_steps: 100
+  save_checkpoints: false
+  save_memory_snapshots: true
