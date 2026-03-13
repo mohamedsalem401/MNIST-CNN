@@ -21,6 +21,8 @@ class BatchInterventionState:
     query_result: Optional[QueryResult] = None
     affected_indices: Optional[torch.Tensor] = None
     intervention_magnitude: Optional[torch.Tensor] = None
+    gate_values: Optional[torch.Tensor] = None
+    retrieval_top1_agreement: Optional[torch.Tensor] = None
 
 
 class HybridInterventionEngine:
@@ -44,6 +46,14 @@ class HybridInterventionEngine:
             enabled_for_forward=False,
             layer_name=self.cfg.intervention.layer,
         )
+
+    def reset_dynamic_state(self) -> None:
+        self.memory_bank = None
+        self.target_builder = None
+        self.hidden_dim = None
+        self.query_dim = None
+        self.affected_indices = None
+        self.query_projection_indices = None
 
     def set_mode(self, training: bool) -> None:
         self.training = training
@@ -159,30 +169,60 @@ class HybridInterventionEngine:
             return base_alpha * frac
         raise ValueError(f"Unsupported gate schedule: {schedule}")
 
-    def _apply_mode(self, hidden: torch.Tensor, retrieved: torch.Tensor, epoch: int) -> torch.Tensor:
+    def _apply_mode(
+        self,
+        hidden: torch.Tensor,
+        retrieved: torch.Tensor,
+        epoch: int,
+        retrieval_distances: Optional[torch.Tensor] = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         idx = self.affected_indices
         pre = hidden
 
+        strength = max(float(self.cfg.intervention.intervention_strength), 0.0)
         if self.cfg.target.value_type == "absolute":
-            overwrite_target = retrieved
+            overwrite_target = pre + strength * (retrieved - pre)
         else:
-            overwrite_target = pre + retrieved
+            overwrite_target = pre + strength * retrieved
 
         mode = self.cfg.intervention.mode
         post = pre.clone()
+        gate_values = torch.zeros((pre.size(0),), device=pre.device)
 
         if mode == "overwrite":
             post[:, idx] = overwrite_target[:, idx]
-            return post
+            if self.cfg.intervention.intervention_clip > 0:
+                clip = float(self.cfg.intervention.intervention_clip)
+                delta = torch.clamp(post[:, idx] - pre[:, idx], min=-clip, max=clip)
+                post[:, idx] = pre[:, idx] + delta
+            return post, gate_values
 
         if mode == "residual":
-            post[:, idx] = pre[:, idx] + retrieved[:, idx]
-            return post
+            post[:, idx] = pre[:, idx] + strength * retrieved[:, idx]
+            if self.cfg.intervention.intervention_clip > 0:
+                clip = float(self.cfg.intervention.intervention_clip)
+                delta = torch.clamp(post[:, idx] - pre[:, idx], min=-clip, max=clip)
+                post[:, idx] = pre[:, idx] + delta
+            return post, gate_values
 
         if mode == "gated":
-            alpha = self._gate_alpha(epoch)
-            post[:, idx] = (1.0 - alpha) * pre[:, idx] + alpha * overwrite_target[:, idx]
-            return post
+            base_alpha = self._gate_alpha(epoch)
+            if self.cfg.intervention.uncertainty_aware_gating and retrieval_distances is not None and retrieval_distances.numel() > 0:
+                dist_mean = retrieval_distances.mean(dim=1)
+                logits = -dist_mean / max(float(self.cfg.intervention.gate_temperature), 1e-6)
+                sample_alpha = torch.sigmoid(logits)
+            else:
+                sample_alpha = torch.ones((pre.size(0),), device=pre.device)
+
+            alpha = base_alpha * sample_alpha + float(self.cfg.intervention.gate_bias_init)
+            alpha = torch.clamp(alpha, min=0.0, max=1.0)
+            gate_values = alpha.detach()
+            post[:, idx] = (1.0 - alpha.unsqueeze(1)) * pre[:, idx] + alpha.unsqueeze(1) * overwrite_target[:, idx]
+            if self.cfg.intervention.intervention_clip > 0:
+                clip = float(self.cfg.intervention.intervention_clip)
+                delta = torch.clamp(post[:, idx] - pre[:, idx], min=-clip, max=clip)
+                post[:, idx] = pre[:, idx] + delta
+            return post, gate_values
 
         raise ValueError(f"Unsupported intervention mode: {mode}")
 
@@ -208,16 +248,29 @@ class HybridInterventionEngine:
         if not self.state.enabled_for_forward or self.memory_bank is None or self.memory_bank.size == 0:
             self.state.hidden_post = hidden
             self.state.intervention_magnitude = torch.zeros(hidden.size(0), device=hidden.device)
+            self.state.gate_values = torch.zeros(hidden.size(0), device=hidden.device)
+            self.state.retrieval_top1_agreement = torch.zeros(hidden.size(0), device=hidden.device)
             return hidden
 
         query_labels = self.current_labels.detach() if self.current_labels is not None else None
         retrieval = self.memory_bank.query(query, query_labels=query_labels)
         retrieved = retrieval.values.to(hidden.device)
-        post = self._apply_mode(hidden, retrieved, epoch=self.current_epoch)
+        post, gate_values = self._apply_mode(
+            hidden,
+            retrieved,
+            epoch=self.current_epoch,
+            retrieval_distances=retrieval.distances,
+        )
 
         self.state.query_result = retrieval
         self.state.hidden_post = post
         self.state.intervention_magnitude = (post - hidden).norm(dim=1).detach()
+        self.state.gate_values = gate_values
+        if retrieval.labels is not None and query_labels is not None and retrieval.labels.size(1) > 0:
+            top1 = retrieval.labels[:, 0]
+            self.state.retrieval_top1_agreement = (top1 == query_labels.to(top1.device)).float()
+        else:
+            self.state.retrieval_top1_agreement = torch.zeros(hidden.size(0), device=hidden.device)
         return post
 
     def populate_memory(
@@ -289,9 +342,14 @@ class HybridInterventionEngine:
 
         if self.state.intervention_magnitude is not None:
             metrics["intervention_magnitude_mean"] = float(self.state.intervention_magnitude.mean().item())
+        if self.state.gate_values is not None:
+            metrics["gate_value_mean"] = float(self.state.gate_values.mean().item())
+            metrics["gate_value_std"] = float(self.state.gate_values.std(unbiased=False).item())
         if self.state.query_result is not None:
             metrics["retrieval_purity_mean"] = float(self.state.query_result.purity.float().mean().item())
             metrics["retrieval_distance_mean"] = float(self.state.query_result.distances.float().mean().item())
+        if self.state.retrieval_top1_agreement is not None:
+            metrics["retrieval_top1_agreement_mean"] = float(self.state.retrieval_top1_agreement.mean().item())
         return metrics
 
     def export_memory_state(self) -> Dict[str, torch.Tensor]:

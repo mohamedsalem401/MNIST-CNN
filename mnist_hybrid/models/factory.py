@@ -13,6 +13,7 @@ def build_model(config: ModelConfig) -> IntervenableModel:
             num_classes=config.num_classes,
             dropout=config.dropout,
             extra_parametric_layer=config.extra_parametric_layer,
+            growth_enabled=config.growth_enabled,
         )
 
     if config.architecture == "cnn":
