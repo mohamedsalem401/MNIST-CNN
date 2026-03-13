@@ -1,0 +1,164 @@
+output_root: results/growth_analysis/stage_a_matrix
+runs:
+  - name: g0_fixed_small_no_memory
+    overrides:
+      method: nn
+      model:
+        growth_enabled: false
+        hidden_sizes: [48, 48]
+        capacity_match_baseline: false
+
+  - name: g1_fixed_small_with_memory
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: false
+        hidden_sizes: [48, 48]
+        capacity_match_baseline: false
+      memory:
+        memory_enabled: true
+        memory_layer: penultimate
+
+  - name: g2_fixed_large_no_memory_capacity_matched
+    overrides:
+      method: nn
+      model:
+        growth_enabled: false
+        capacity_match_baseline: true
+        max_width: 96
+        max_depth: 4
+
+  - name: g3_fixed_large_with_memory_capacity_matched
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: false
+        capacity_match_baseline: true
+        max_width: 96
+        max_depth: 4
+
+  - name: g4_growing_no_memory
+    overrides:
+      method: nn
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+
+  - name: g5_growing_with_memory
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        memory_enabled: true
+        memory_layer: penultimate
+        memory_intervention_mode: gated
+
+  - name: g6_growing_random_memory_control
+    overrides:
+      method: random_memory
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        random_memory_control: true
+
+  - name: g7_growing_inactive_memory_control
+    overrides:
+      method: hybrid_inactive
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        memory_train_enabled: false
+        memory_inference_enabled: false
+
+  - name: g8_prior_nn_large
+    overrides:
+      method: nn_large
+      model:
+        growth_enabled: false
+        capacity_match_baseline: false
+        hidden_sizes: [256, 128]
+
+  - name: g9_prior_embedding_knn
+    overrides:
+      method: embedding_knn
+      model:
+        growth_enabled: false
+        capacity_match_baseline: false
+        hidden_sizes: [256, 128]
+
+  - name: g10_growing_with_memory_overwrite
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        memory_intervention_mode: overwrite
+        memory_layer: penultimate
+
+  - name: g11_growing_with_memory_layer_early
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        memory_layer: early
+
+  - name: g12_growing_with_memory_uncertainty_gating
+    overrides:
+      method: hybrid
+      model:
+        growth_enabled: true
+        growth_mode: width_and_depth
+        growth_schedule: epoch_based
+        growth_interval: 1
+        growth_amount_width: 16
+        growth_amount_depth: 1
+        growth_warmup_epochs: 1
+        growth_stop_epoch: 3
+      memory:
+        memory_intervention_mode: gated
+        intervention:
+          uncertainty_aware_gating: true
+          gate_temperature: 0.25
