@@ -1,37 +1,45 @@
-# MNIST Hybrid NN + KNN-Memory Research Toolkit
+# MNIST Hybrid + Growing-NN Memory Research Toolkit
 
-This repository now provides a full experimental toolkit for studying **hidden-state retrieval interventions** in MNIST classifiers.
+This repository is a research toolkit for evaluating **hidden-state memory retrieval interventions** in MNIST models, including fixed architectures and progressively growing MLPs.
 
-## What this toolkit supports
-- Baselines:
+## Current Research Status
+- Prior staged ablation study report: `docs/final_scientific_report.md`
+- New growing-architecture study report: `docs/growing_scientific_report.md`
+- Latest growing study outcome: growing+memory is currently **unsupported** under control- and baseline-separation criteria.
+
+## What This Toolkit Supports
+- Baseline methods:
   - Plain NN (`nn`)
   - Larger NN (`nn_large`)
   - NN + extra parametric layer (`nn_extra_layer`)
-  - Final-layer embedding KNN (`embedding_knn`)
-- Hybrid NN + memory model with configurable:
-  - Intervention layer (`early` / `middle` / `late` / `penultimate` or explicit layer name)
-  - Number/selection of affected hidden dimensions
-  - Query representation (`full`, `untouched`, `projection`)
-  - Value type (`absolute`, `delta`)
-  - Intervention mode (`overwrite`, `residual`, `gated`)
-  - Train-time vs inference-time memory usage
-- Memory retrieval and management:
-  - Euclidean/cosine KNN
-  - top-k and weighted aggregation
-  - Staleness-aware policies: none, TTL, FIFO, reservoir, usage, helpfulness, helpfulness+age
-  - Refresh updates via EMA
-- Controls:
-  - Memory inactive sanity check
-  - Random-memory retrieval control
-- Evaluation and analysis:
-  - Loss/accuracy/ECE
-  - Per-class metrics and confusion matrices
-  - Helped/harmed sample fractions via memory on/off toggles
-  - Retrieval purity/distance stats
-  - Intervention magnitude, memory age/usefulness/usage stats
-  - Overhead and footprint tracking
+  - Embedding-space KNN baseline (`embedding_knn`)
+- Hybrid memory-intervention methods:
+  - Active hybrid (`hybrid`)
+  - Inactive memory control (`hybrid_inactive`)
+  - Random-memory control (`random_memory`)
+- Intervention controls:
+  - Layer placement (`early` / `middle` / `late` / `penultimate` / explicit layer)
+  - Query source (`full`, `untouched`, `projection`)
+  - Value target type (`delta`, `absolute`)
+  - Mode (`gated`, `residual`, `overwrite`)
+  - Train-time / inference-time memory usage toggles
+- Memory system:
+  - L2/cosine retrieval
+  - Top-k weighted retrieval
+  - Forgetting/eviction policies (`none`, `ttl`, `fifo`, `reservoir`, `usage`, `helpfulness`, `helpfulness_age`)
+  - Optional refresh updates
+- Growing MLP architecture:
+  - Width/depth/combined growth modes
+  - Epoch/plateau/performance/fixed-step growth schedules
+  - Growth event logging and parameter-count timeline
+- Diagnostics:
+  - Accuracy/loss/ECE
+  - Helped/harmed + strong-help/strong-harm fractions
+  - Retrieval purity/distance/top-1 agreement
+  - Gate statistics and intervention magnitude
+  - Throughput, training time, inference time, memory footprint
 
-## Project layout
+## Repository Layout
 - `mnist_hybrid/config.py`: experiment schema + YAML loading + CLI overrides
 - `mnist_hybrid/data.py`: MNIST split/data loader utilities
 - `mnist_hybrid/models/`: MLP/CNN intervenable models
@@ -42,52 +50,83 @@ This repository now provides a full experimental toolkit for studying **hidden-s
 - `scripts/run_matrix.py`: ablation matrix runner
 - `scripts/analyze_results.py`: generate plots from run outputs
 - `scripts/summarize_matrix.py`: tabular summary export
-- `configs/`: baseline/hybrid configs and ablation matrix
+- `scripts/prepare_growth_stage_b.py`: Stage B promotion + config generation for growth study
+- `scripts/build_growth_analysis.py`: growth-study consolidation, pairwise stats, and report writer
+- `configs/`: baseline/hybrid configs, ablation matrix, and growth-study matrices
 - `docs/research_plan.md`: hypotheses and experiment discipline
-- `docs/report_template.md`: full research report structure
+- `docs/growth_extension_plan.md`: growth-study plan, matrix, and default hyperparameters
+
+## Results Artifact Map
+- Original staged analysis:
+  - `results/final_analysis/consolidated_metrics.csv`
+  - `results/final_analysis/comparison_tests.csv`
+  - `docs/final_scientific_report.md`
+- Growing-architecture analysis:
+  - `results/growth_analysis/consolidated_metrics.csv`
+  - `results/growth_analysis/comparison_tests.csv`
+  - `results/growth_analysis/stage_policy.json`
+  - `docs/growing_scientific_report.md`
 
 ## Setup
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run a baseline
+## Run Single Experiments
 ```bash
+# Plain NN
 python scripts/run_experiment.py --config configs/baseline_nn.yaml
-```
 
-## Run a hybrid experiment
-```bash
+# Hybrid with memory
 python scripts/run_experiment.py --config configs/base_hybrid.yaml
 ```
 
-## Run full ablation matrix
+## Run Original Ablation Matrix
 ```bash
 python scripts/run_matrix.py --base-config configs/base_hybrid.yaml --matrix configs/ablation_matrix.yaml
 python scripts/summarize_matrix.py --summary results/matrix/matrix_summary.json
 ```
 
-## Analyze one run
+## Run Growing-Architecture Study (Stage A -> Stage B)
+```bash
+# Stage A screening
+python scripts/run_matrix.py --base-config configs/growth_base_stage_a.yaml --matrix configs/growth_matrix_stage_a.yaml
+
+# Build Stage B promoted configs from Stage A validation only
+python scripts/prepare_growth_stage_b.py
+
+# Stage B multi-seed confirmation
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed11.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed11.yaml
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed22.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed22.yaml
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed33.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed33.yaml
+
+# Consolidate and write report
+python scripts/build_growth_analysis.py
+```
+
+## Analyze a Single Run
 ```bash
 python scripts/analyze_results.py --experiment-dir results/hybrid_base_seed11
 ```
 
-## Reproducibility notes
-- Every run saves:
-  - Config snapshot via `metrics.json`
-  - Epoch logs (`epoch_logs.csv`)
-  - Detailed per-sample artifacts (`details.pt`)
-  - Optional memory snapshot (`analysis/memory_state.pt`)
-- Multi-seed aggregation is exported to `aggregate_metrics.json`.
+## Reproducibility Conventions
+- Promotion decisions in staged studies use validation metrics only.
+- Every run writes:
+  - `metrics.json` (config + environment + final/toggle metrics)
+  - `epoch_logs.csv` (epoch-level training/validation trace)
+  - `details.pt` (sample-level evaluation diagnostics)
+  - `analysis/memory_state.pt` when memory snapshots are enabled
+- Growth-capable runs additionally log:
+  - growth event timeline
+  - parameter-count timeline
+  - pre/post-growth validation deltas
 
-## Research workflow
-1. Finalize hypotheses in `docs/research_plan.md`.
-2. Execute baseline and control configs.
-3. Run targeted ablations from `configs/ablation_matrix.yaml`.
-4. Generate diagnostics with `scripts/analyze_results.py`.
-5. Write the report with `docs/report_template.md` and `docs/executive_summary_template.md`.
+## Reporting Guidance
+- Separate evidence-backed conclusions from interpretation and open questions.
+- Report negative/null findings explicitly, especially for active-memory vs random/inactive controls.
+- Do not claim success unless confidence intervals exclude zero for the required causal comparisons.
 
 ## Legacy files
 Legacy visualization/training scripts remain available:

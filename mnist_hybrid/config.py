@@ -20,6 +20,9 @@ class DataConfig:
     max_train_samples: int = 0
     max_val_samples: int = 0
     max_test_samples: int = 0
+    train_subset_size: int = 0
+    val_subset_size: int = 0
+    test_subset_size: int = 0
 
 
 @dataclass
@@ -31,6 +34,21 @@ class ModelConfig:
     num_classes: int = 10
     dropout: float = 0.0
     extra_parametric_layer: bool = False
+    initial_width: int = 0
+    initial_depth: int = 0
+    growth_enabled: bool = False
+    growth_mode: str = "width_and_depth"  # width | depth | width_and_depth
+    growth_schedule: str = "epoch_based"  # epoch_based | plateau_based | performance_triggered | fixed_step
+    growth_interval: int = 1
+    growth_amount_width: int = 0
+    growth_amount_depth: int = 0
+    max_width: int = 0
+    max_depth: int = 0
+    growth_warmup_epochs: int = 0
+    growth_stop_epoch: int = 0
+    growth_performance_threshold: float = 0.0
+    growth_min_delta: float = 1e-4
+    capacity_match_baseline: bool = False
 
 
 @dataclass
@@ -41,6 +59,9 @@ class OptimConfig:
     momentum: float = 0.9
     epochs: int = 8
     grad_clip_norm: float = 0.0
+    scheduler: str = "none"
+    early_stopping: bool = False
+    early_stopping_patience: int = 0
 
 
 @dataclass
@@ -91,6 +112,12 @@ class InterventionConfig:
     query_mode: str = "full"  # full | untouched | projection
     query_projection_dims: int = 64
     gate_alpha: float = 0.4
+    gate_temperature: float = 1.0
+    gate_bias_init: float = 0.0
+    gate_regularization: float = 0.0
+    intervention_strength: float = 1.0
+    intervention_clip: float = 0.0
+    uncertainty_aware_gating: bool = False
     gate_schedule: str = "constant"  # constant | linear_warmup
     warmup_epochs: int = 1
     training_use: bool = True
@@ -104,6 +131,18 @@ class MemoryConfig:
     enabled: bool = True
     insertion_policy: str = "always"  # always | loss_above_mean
     random_memory_control: bool = False
+    memory_enabled: Optional[bool] = None
+    memory_layer: Optional[str] = None
+    memory_k: Optional[int] = None
+    memory_size: Optional[int] = None
+    memory_update_policy: Optional[str] = None
+    memory_forgetting_policy: Optional[str] = None
+    memory_distance: Optional[str] = None  # l2 | cosine
+    memory_query_source: Optional[str] = None
+    memory_value_target: Optional[str] = None  # delta | absolute
+    memory_intervention_mode: Optional[str] = None  # gated | residual | overwrite
+    memory_train_enabled: Optional[bool] = None
+    memory_inference_enabled: Optional[bool] = None
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
     forgetting: ForgettingConfig = field(default_factory=ForgettingConfig)
     target: TargetConfig = field(default_factory=TargetConfig)
@@ -118,6 +157,12 @@ class EvalConfig:
     confusion_matrix: bool = True
     per_class_metrics: bool = True
     max_samples_for_latent_vis: int = 2000
+    strong_effect_threshold: float = 0.2
+    n_seeds: int = 0
+    primary_metric: str = "val_accuracy"
+    multiple_comparison_correction: str = "none"
+    promotion_rule: str = "validation_only"
+    compute_budget_tier: str = "standard"
 
 
 @dataclass

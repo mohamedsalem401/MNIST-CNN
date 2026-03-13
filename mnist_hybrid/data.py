@@ -49,9 +49,13 @@ def build_datasets(config: DataConfig, seed: int) -> Dict[str, Dataset]:
     generator = torch.Generator().manual_seed(seed)
     train, val, _ = random_split(train_full, lengths=lengths, generator=generator)
 
-    train = _maybe_subset(train, config.max_train_samples, seed)
-    val = _maybe_subset(val, config.max_val_samples, seed + 1)
-    test = _maybe_subset(test, config.max_test_samples, seed + 2)
+    max_train = config.train_subset_size if config.train_subset_size > 0 else config.max_train_samples
+    max_val = config.val_subset_size if config.val_subset_size > 0 else config.max_val_samples
+    max_test = config.test_subset_size if config.test_subset_size > 0 else config.max_test_samples
+
+    train = _maybe_subset(train, max_train, seed)
+    val = _maybe_subset(val, max_val, seed + 1)
+    test = _maybe_subset(test, max_test, seed + 2)
 
     return {
         "train": train,

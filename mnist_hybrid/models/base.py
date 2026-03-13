@@ -29,5 +29,24 @@ class IntervenableModel(nn.Module):
     ) -> ForwardResult:
         raise NotImplementedError
 
+    def supports_growth(self) -> bool:
+        return False
+
+    def growth_state(self) -> Dict[str, int]:
+        return {}
+
+    def grow(
+        self,
+        growth_mode: str,
+        growth_amount_width: int,
+        growth_amount_depth: int,
+        max_width: int,
+        max_depth: int,
+    ) -> Dict[str, object]:
+        return {"grew": False}
+
+    def parameter_count(self) -> int:
+        return int(sum(p.numel() for p in self.parameters()))
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.forward_intervenable(x, intervention_fn=None, capture_activations=False).logits

@@ -51,18 +51,32 @@ def main() -> None:
         cfg = load_config(args.base_config, overrides=overrides)
         cfg.logging.experiment_name = name
 
-        runner = ExperimentRunner(copy.deepcopy(cfg))
-        output = runner.run()
-
-        summaries.append(
-            {
-                "name": name,
-                "overrides": overrides,
-                "output_dir": output["output_dir"],
-                "final_metrics": output["results"].get("final_metrics", {}),
-                "toggle_eval": output["results"].get("toggle_eval", {}),
-            }
-        )
+        try:
+            runner = ExperimentRunner(copy.deepcopy(cfg))
+            output = runner.run()
+            summaries.append(
+                {
+                    "name": name,
+                    "status": "success",
+                    "overrides": overrides,
+                    "output_dir": output["output_dir"],
+                    "final_metrics": output["results"].get("final_metrics", {}),
+                    "toggle_eval": output["results"].get("toggle_eval", {}),
+                }
+            )
+        except Exception as exc:
+            summaries.append(
+                {
+                    "name": name,
+                    "status": "failed",
+                    "overrides": overrides,
+                    "output_dir": "",
+                    "final_metrics": {},
+                    "toggle_eval": {},
+                    "error": repr(exc),
+                }
+            )
+            print(f"[WARN] Run '{name}' failed: {exc}")
 
     out_root = ensure_dir(Path(matrix_cfg.get("output_root", "results/matrix")))
     save_json({"matrix": summaries}, out_root / "matrix_summary.json")
