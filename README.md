@@ -111,6 +111,23 @@ python scripts/build_growth_analysis.py
 python scripts/analyze_results.py --experiment-dir results/hybrid_base_seed11
 ```
 
+## Reproducibility Conventions
+- Promotion decisions in staged studies use validation metrics only.
+- Every run writes:
+  - `metrics.json` (config + environment + final/toggle metrics)
+  - `epoch_logs.csv` (epoch-level training/validation trace)
+  - `details.pt` (sample-level evaluation diagnostics)
+  - `analysis/memory_state.pt` when memory snapshots are enabled
+- Growth-capable runs additionally log:
+  - growth event timeline
+  - parameter-count timeline
+  - pre/post-growth validation deltas
+
+## Reporting Guidance
+- Separate evidence-backed conclusions from interpretation and open questions.
+- Report negative/null findings explicitly, especially for active-memory vs random/inactive controls.
+- Do not claim success unless confidence intervals exclude zero for the required causal comparisons.
+
 ## Legacy files
 Legacy visualization/training scripts remain available:
 - `train.py`
