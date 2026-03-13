@@ -39,7 +39,7 @@ This repository is a research toolkit for evaluating **hidden-state memory retri
   - Gate statistics and intervention magnitude
   - Throughput, training time, inference time, memory footprint
 
-## Project layout
+## Repository Layout
 - `mnist_hybrid/config.py`: experiment schema + YAML loading + CLI overrides
 - `mnist_hybrid/data.py`: MNIST split/data loader utilities
 - `mnist_hybrid/models/`: MLP/CNN intervenable models
@@ -50,9 +50,22 @@ This repository is a research toolkit for evaluating **hidden-state memory retri
 - `scripts/run_matrix.py`: ablation matrix runner
 - `scripts/analyze_results.py`: generate plots from run outputs
 - `scripts/summarize_matrix.py`: tabular summary export
-- `configs/`: baseline/hybrid configs and ablation matrix
+- `scripts/prepare_growth_stage_b.py`: Stage B promotion + config generation for growth study
+- `scripts/build_growth_analysis.py`: growth-study consolidation, pairwise stats, and report writer
+- `configs/`: baseline/hybrid configs, ablation matrix, and growth-study matrices
 - `docs/research_plan.md`: hypotheses and experiment discipline
-- `docs/report_template.md`: full research report structure
+- `docs/growth_extension_plan.md`: growth-study plan, matrix, and default hyperparameters
+
+## Results Artifact Map
+- Original staged analysis:
+  - `results/final_analysis/consolidated_metrics.csv`
+  - `results/final_analysis/comparison_tests.csv`
+  - `docs/final_scientific_report.md`
+- Growing-architecture analysis:
+  - `results/growth_analysis/consolidated_metrics.csv`
+  - `results/growth_analysis/comparison_tests.csv`
+  - `results/growth_analysis/stage_policy.json`
+  - `docs/growing_scientific_report.md`
 
 ## Setup
 ```bash
