@@ -56,46 +56,47 @@ This repository is a research toolkit for evaluating **hidden-state memory retri
 
 ## Setup
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run a baseline
+## Run Single Experiments
 ```bash
+# Plain NN
 python scripts/run_experiment.py --config configs/baseline_nn.yaml
-```
 
-## Run a hybrid experiment
-```bash
+# Hybrid with memory
 python scripts/run_experiment.py --config configs/base_hybrid.yaml
 ```
 
-## Run full ablation matrix
+## Run Original Ablation Matrix
 ```bash
 python scripts/run_matrix.py --base-config configs/base_hybrid.yaml --matrix configs/ablation_matrix.yaml
 python scripts/summarize_matrix.py --summary results/matrix/matrix_summary.json
 ```
 
-## Analyze one run
+## Run Growing-Architecture Study (Stage A -> Stage B)
+```bash
+# Stage A screening
+python scripts/run_matrix.py --base-config configs/growth_base_stage_a.yaml --matrix configs/growth_matrix_stage_a.yaml
+
+# Build Stage B promoted configs from Stage A validation only
+python scripts/prepare_growth_stage_b.py
+
+# Stage B multi-seed confirmation
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed11.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed11.yaml
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed22.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed22.yaml
+python scripts/run_matrix.py --base-config results/growth_analysis/configs/growth_base_stage_b_seed33.yaml --matrix results/growth_analysis/configs/growth_matrix_stage_b_seed33.yaml
+
+# Consolidate and write report
+python scripts/build_growth_analysis.py
+```
+
+## Analyze a Single Run
 ```bash
 python scripts/analyze_results.py --experiment-dir results/hybrid_base_seed11
 ```
-
-## Reproducibility notes
-- Every run saves:
-  - Config snapshot via `metrics.json`
-  - Epoch logs (`epoch_logs.csv`)
-  - Detailed per-sample artifacts (`details.pt`)
-  - Optional memory snapshot (`analysis/memory_state.pt`)
-- Multi-seed aggregation is exported to `aggregate_metrics.json`.
-
-## Research workflow
-1. Finalize hypotheses in `docs/research_plan.md`.
-2. Execute baseline and control configs.
-3. Run targeted ablations from `configs/ablation_matrix.yaml`.
-4. Generate diagnostics with `scripts/analyze_results.py`.
-5. Write the report with `docs/report_template.md` and `docs/executive_summary_template.md`.
 
 ## Legacy files
 Legacy visualization/training scripts remain available:
