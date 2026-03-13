@@ -1,35 +1,43 @@
-# MNIST Hybrid NN + KNN-Memory Research Toolkit
+# MNIST Hybrid + Growing-NN Memory Research Toolkit
 
-This repository now provides a full experimental toolkit for studying **hidden-state retrieval interventions** in MNIST classifiers.
+This repository is a research toolkit for evaluating **hidden-state memory retrieval interventions** in MNIST models, including fixed architectures and progressively growing MLPs.
 
-## What this toolkit supports
-- Baselines:
+## Current Research Status
+- Prior staged ablation study report: `docs/final_scientific_report.md`
+- New growing-architecture study report: `docs/growing_scientific_report.md`
+- Latest growing study outcome: growing+memory is currently **unsupported** under control- and baseline-separation criteria.
+
+## What This Toolkit Supports
+- Baseline methods:
   - Plain NN (`nn`)
   - Larger NN (`nn_large`)
   - NN + extra parametric layer (`nn_extra_layer`)
-  - Final-layer embedding KNN (`embedding_knn`)
-- Hybrid NN + memory model with configurable:
-  - Intervention layer (`early` / `middle` / `late` / `penultimate` or explicit layer name)
-  - Number/selection of affected hidden dimensions
-  - Query representation (`full`, `untouched`, `projection`)
-  - Value type (`absolute`, `delta`)
-  - Intervention mode (`overwrite`, `residual`, `gated`)
-  - Train-time vs inference-time memory usage
-- Memory retrieval and management:
-  - Euclidean/cosine KNN
-  - top-k and weighted aggregation
-  - Staleness-aware policies: none, TTL, FIFO, reservoir, usage, helpfulness, helpfulness+age
-  - Refresh updates via EMA
-- Controls:
-  - Memory inactive sanity check
-  - Random-memory retrieval control
-- Evaluation and analysis:
-  - Loss/accuracy/ECE
-  - Per-class metrics and confusion matrices
-  - Helped/harmed sample fractions via memory on/off toggles
-  - Retrieval purity/distance stats
-  - Intervention magnitude, memory age/usefulness/usage stats
-  - Overhead and footprint tracking
+  - Embedding-space KNN baseline (`embedding_knn`)
+- Hybrid memory-intervention methods:
+  - Active hybrid (`hybrid`)
+  - Inactive memory control (`hybrid_inactive`)
+  - Random-memory control (`random_memory`)
+- Intervention controls:
+  - Layer placement (`early` / `middle` / `late` / `penultimate` / explicit layer)
+  - Query source (`full`, `untouched`, `projection`)
+  - Value target type (`delta`, `absolute`)
+  - Mode (`gated`, `residual`, `overwrite`)
+  - Train-time / inference-time memory usage toggles
+- Memory system:
+  - L2/cosine retrieval
+  - Top-k weighted retrieval
+  - Forgetting/eviction policies (`none`, `ttl`, `fifo`, `reservoir`, `usage`, `helpfulness`, `helpfulness_age`)
+  - Optional refresh updates
+- Growing MLP architecture:
+  - Width/depth/combined growth modes
+  - Epoch/plateau/performance/fixed-step growth schedules
+  - Growth event logging and parameter-count timeline
+- Diagnostics:
+  - Accuracy/loss/ECE
+  - Helped/harmed + strong-help/strong-harm fractions
+  - Retrieval purity/distance/top-1 agreement
+  - Gate statistics and intervention magnitude
+  - Throughput, training time, inference time, memory footprint
 
 ## Project layout
 - `mnist_hybrid/config.py`: experiment schema + YAML loading + CLI overrides
